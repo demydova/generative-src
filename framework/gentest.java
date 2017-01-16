@@ -16,7 +16,7 @@ import static java.lang.System.out;
 public class gentest {
 	
 	//URL which should be parsed and afterwards reflected
-	URL[] v_url;
+	static URL[] v_url;
 	//holder for loading of class for testing
 	static Class<?> v_class;
 	//variable for instance of testing class
@@ -24,9 +24,12 @@ public class gentest {
 	//list of consturctor for class for testing
 	static Constructor[] constructors;
 	//secondary element for loading of URLs
-	URLClassLoader v_cloader;
+	static URLClassLoader v_cloader;
 	//variable for method
 	static Method v_method;
+	//variable for setting the time of method duration
+	static Long time;
+	static String results="";
 	
 	//List of arguments for creating of instance of consturctor and tartet test-functions
 	static Object[] v_arg_constr;		//list of arguments for consturctor
@@ -48,25 +51,57 @@ public class gentest {
 		//looking for instance of tested function
 		for(Method v_methods : v_class.getDeclaredMethods())
 		{
-			System.out.println("Method " +v_methods.getName() + " Func "+ funcname);
-				if(v_methods.getName().equals(funcname))
-				{
-					v_method=v_methods;
-					break;
-				}
-				else
-					System.out.println("The necessary method is not found");
-		}	
-		
+			//System.out.println("Method " +v_methods.getName() + " Func "+ funcname);
+			if(v_methods.getName().equals(funcname))
+			{
+				//instanse of tested function
+				v_method=v_methods;
+				break;
+			}
+			
+		}		
 	}
 
 	//main method
 	public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException	
 	{
-		Generator v_generator = new Generator();
+		Generator v_generator = new Generator();		
+		gentest test_engine;
 		//initialize framework for target class and function
-		gentest test_engine = new gentest("file:///Users/annademydova/Documents/workspace/randoopTestProject/bin/", "core.Util", "edlich");
+		//gentest test_engine = new gentest("file:///Users/annademydova/Documents/workspace/randoopTestProject/bin/", "core.Util", "edlich");
+		
+		//if quantitiy of arguments doesnt correspond to expectation - close the programm
+		if (args.length !=4) {
+			System.out.println("INITIALIZING ERROR: You need to give 4 arguments");
+			return;
+		}	
+		
+		//try to initialize the class variable with given arguments
+		try{
+			test_engine = new gentest(args[0], args[1], args[2]);
+			time=Long.parseLong(args[3]);	
+		}
+		catch(ClassNotFoundException e){
+	        System.out.println("INITIALIZING ERROR: Class cannot be found under given URL.");
+	        return;
+	     }
+		catch(NumberFormatException e){
+	        System.out.println("INITIALIZING ERROR: Give testing time doesnt correspond to expected format (LONG).");
+	        return;
+	     }
+		catch (Exception e) {
+				// Error notification
+				System.out.println(e);
+				return;
+	    	}
+			
+		//if the method for testing is not found in the given class
+		if (v_method==null){
+			System.out.println("INITIALIZING ERROR: The method "+ args[2]+" is not found in class " +args[1]+".java!");
+			return;
+		}	
 
+		
 		//Take first constructor and parse his parameter list
 		v_arg_constr=new Object[constructors[0].getParameterCount()];
 		v_params_constr = constructors[0].getParameterTypes();
@@ -77,22 +112,64 @@ public class gentest {
 		
 		//initialize variable of testing class
 		v_generator.fill_arguments(v_arg_constr, v_params_constr);
+		//instanse of testing class
 		v_object=constructors[0].newInstance(v_arg_constr);
 		
-		try{
-			//Timer Variable
-    		long last = System.currentTimeMillis();
-    		//the time for testing is set
-    		while (System.currentTimeMillis() < last + 5000) {
-    			//invoke the function 		
-    			v_generator.fill_arguments(v_arg_testfunc, v_params_testfunc);
-    			System.out.println("Function results: "+v_method.invoke(v_object, v_arg_testfunc));
+		
+		//Timer Variable
+    	long last = System.currentTimeMillis();
+    	int i=0;
+    	int failed=0;
+    	int results_counter=0;
+    	//the time for testing is set
+    	while (System.currentTimeMillis() < last + time) {
+    		try{
+    			//invoke the function 	
+    			i++;
+    			v_generator.fill_arguments(v_arg_testfunc, v_params_testfunc);    		
+    			v_method.invoke(v_object, v_arg_testfunc);
+    			//System.out.println("Function results: "+v_method.invoke(v_object, v_arg_testfunc));	
+    			//System.out.println("Number of test: " + i);
     		}
-		}
-		catch (Exception e) {
-			// Error notification
-	  	    System.out.println("An error has occured");
+ 
+    		catch (Exception ex) {
+    			results_counter++;
+    			//counts the number of failed tests
+    			failed++;
+    			if(results_counter==1){
+    				System.out.println("First 10 failed results");
+    			}
+    			//prints the first 10 negative results which brought to error
+    			if(results_counter<10){
+    				System.out.println();
+    				System.out.println("Failure: " +results_counter);
+    				//runs along the paramehers of the tested function
+    				for(int k=0; k<v_params_testfunc.length; k++){	
+    					//print the type of parameters of the tested function
+    					System.out.print("Tested parameter: "+v_params_testfunc[k].getSimpleName() + " - ");
+    					//if one of the parameters is array, it should be printed in a loop
+    					if(v_params_testfunc[k].getSimpleName().contains("[]")){
+    						//loop for array print: from 0 up to the length of array which is one of the parameters of the tested function
+    						for(int j=0; j<Array.getLength(v_arg_testfunc[k]); j++){
+    							System.out.print(Array.get(v_arg_testfunc[k], j).toString() + " "); 
+    						}
+    					}
+    					else System.out.println(v_arg_testfunc[k]);
+    				}
+    				System.out.println();
+			
+    			}
+
 	  	    }
 
-	}	
+    	}
+    	
+    	//Print the results of test
+    	System.out.println();
+    	System.out.println("*************************************************");
+    	System.out.println("The tests were running within: " + time/1000 +"s");
+    	System.out.println("Number of all tests: " + i);
+    	System.out.println("Number of succeedeed tests: " + (i-failed));
+    	System.out.println("Number of failed tests: " + failed);
+    }
 }
