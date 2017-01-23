@@ -151,7 +151,7 @@ public class gentest {
     //the function that compares the number and types of saved parameters in xml file with those in the tested function
     public static void compare_parm(){
 		
-		for (int i=0;i<v_arg_testfunc.length;i++){
+		for (int i=0;i<v_params_testfunc.length;i++){
 			//if parameters are not identic, the saved List of data will be deleted in xml file
 			if (!((rec_v_params_testfunc.length==v_params_testfunc.length)&&(rec_v_params_testfunc[i].getSimpleName().equals(v_params_testfunc[i].getSimpleName())))){
 				System.out.println("The parameters have changed");	
