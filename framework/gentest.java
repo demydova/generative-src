@@ -43,8 +43,10 @@ public class gentest {
 	static String results="";
 	
 	//List of arguments for creating of instance of consturctor and tartet test-functions
-	static Object[] v_arg_constr;		//list of arguments for consturctor
-	static Object[] v_arg_testfunc;	//list of arguments for function
+	static Object[] v_arg_constr;			//list of arguments for consturctor
+	static Object[] v_arg_testfunc;			//list of arguments for function
+	static Object[] v_arg_testfunc_minimal;	//list of arguments for function
+	static Object[] v_arg_testfunc_minimal_test;	//list of arguments for function
 	
 	//List of types of arguments for creating of instance of consturctor and tartet test-functions
 	static Class[] v_params_constr;		//list of types of arguments for consturctor
@@ -100,7 +102,6 @@ public class gentest {
 		            	
 		            	GenTestAnnotation an_v_method = v_method.getAnnotation(GenTestAnnotation.class);
 		            	//Array that keeps the parts of splitted string
-		            	String[] parts = an_v_method.parameters().split(";");
 		            	
 		            	
 		            	for(int i=0; i<v_arg_testfunc.length; i++){
@@ -150,15 +151,100 @@ public class gentest {
     
     //the function that compares the number and types of saved parameters in xml file with those in the tested function
     public static void compare_parm(){
-		
-		for (int i=0;i<v_params_testfunc.length;i++){
-			//if parameters are not identic, the saved List of data will be deleted in xml file
-			if (!((rec_v_params_testfunc.length==v_params_testfunc.length)&&(rec_v_params_testfunc[i].getSimpleName().equals(v_params_testfunc[i].getSimpleName())))){
-				System.out.println("The parameters have changed");	
-				rec_v_arg_testfunc.clear();
+		if(rec_v_params_testfunc!=null)
+		{
+			for (int i=0;i<rec_v_params_testfunc.length;i++){
+				//if parameters are not identic, the saved List of data will be deleted in xml file
+				if (!((rec_v_params_testfunc.length==v_params_testfunc.length)&&(rec_v_params_testfunc[i].getSimpleName().equals(v_params_testfunc[i].getSimpleName())))){
+					System.out.println("The parameters have changed, skipping the history of failures");	
+					rec_v_arg_testfunc.clear();
 									
-			}				
+				}	
+			}
 		}
+    }
+    
+    //the function that look for minimal failing case
+    public static void minimal_failing_case() throws InstantiationException, IllegalAccessException{
+    	//v_arg_testfunc, v_params_testfunc
+    	//iteration number
+    	int iteration=0;
+    	int element=0;
+    	//list of arguments, which can be minimized
+    	List<Integer> v_arg_list = new ArrayList<Integer>();
+    	
+    	v_arg_testfunc_minimal=v_arg_testfunc.clone();
+    	
+    	//look trough list of arguments and find indext of those, which can be optimized
+    	for(int i=0; i<v_params_testfunc.length;i++){
+    		if(v_params_testfunc[i].getSimpleName().contains("[]")){
+    			if(Array.getLength(v_arg_testfunc_minimal[i])>1) v_arg_list.add(i);
+    		}
+    		if(v_params_testfunc[i].getSimpleName().contains("String")){
+    			if(((String) v_arg_testfunc_minimal[i]).length()>1) v_arg_list.add(i);
+    		}
+    		
+    	}
+    			while(iteration<100 && v_arg_list.size()>0){
+    				element=iteration%v_arg_list.size();
+    				v_arg_testfunc_minimal_test=v_arg_testfunc_minimal.clone();
+    				v_arg_testfunc_minimal_test[v_arg_list.get(element)]=delete_random_element(v_arg_testfunc_minimal_test[v_arg_list.get(element)], v_arg_list.get(element));
+    				
+
+    				
+    				try{
+    	    			
+    	    			////////////////////////////////////////////////////////////////////////////
+    	    			////////////////////////////////////////////////////////////////////////////
+    	    			////////////////////////////////////////////////////////////////////////////
+    	    			//invoke the function 	  		
+    	    			v_method.invoke(v_object, v_arg_testfunc_minimal_test);
+
+    	    		}
+    	 
+    	    		catch (Exception ex) {
+    	    			//catch found element
+    	    			v_arg_testfunc_minimal=v_arg_testfunc_minimal_test.clone();
+    	    			//if length==1 delete from minimalizing
+    	    			if(v_params_testfunc[v_arg_list.get(element)].getSimpleName().contains("[]"))
+            			{
+        		    		if(Array.getLength(v_arg_testfunc_minimal[v_arg_list.get(element)])==1) v_arg_list.remove(element);
+            			}
+        		    	else{
+        		    		if(((String) v_arg_testfunc_minimal[v_arg_list.get(element)]).length()==1) v_arg_list.remove(element);
+        		    	}
+    	    			
+    	    			
+    	    			
+    	    		}
+    				
+
+    				iteration++;
+    			}
+    }
+    
+    //the function that look for minimal failing case
+    public static Object delete_random_element(Object v_in_object, int element) throws InstantiationException, IllegalAccessException{
+    	Object result=v_in_object;
+    	int del;
+    	if(v_params_testfunc[element].getSimpleName().contains("[]"))
+    			{
+    				
+    				Object res= Array.newInstance(v_params_testfunc[element].getComponentType(), Array.getLength(v_in_object)-1);
+    				del=new Random().nextInt(Array.getLength(v_in_object));
+    				int k=0;
+    				for(int i=0; i<(Array.getLength(v_in_object)-1);i++)
+    				{
+    					if(i==del) k++;
+    					Array.set(res, i, Array.get(v_in_object, k));
+    					k++;	
+    				}
+    				result=res;
+    			}
+    	else{
+    		result=((String) v_in_object).replaceFirst(""+((String) v_in_object).charAt(new Random().nextInt(((String) v_in_object).length()-1)), "");
+    	}
+ 	return result;
     }
 
 	//main method
@@ -251,6 +337,10 @@ public class gentest {
     			
     			//increment the number of test
     			i++;
+    			
+    			////////////////////////////////////////////////////////////////////////////
+    			////////////////////////////////////////////////////////////////////////////
+    			////////////////////////////////////////////////////////////////////////////
     			//invoke the function 	  		
     			v_method.invoke(v_object, v_arg_testfunc);
     			
@@ -271,13 +361,16 @@ public class gentest {
     				System.out.println("First 10 failed results");
     			}
     			//prints the first 10 negative results which brought to error
+    			
+    			
+    			////10!!!!!
     			if(results_counter<10){
     				System.out.println();
     				System.out.println("Failure: " +results_counter);
     				//runs along the paramehers of the tested function
     				for(int k=0; k<v_params_testfunc.length; k++){	
     					//print the type of parameters of the tested function
-    					System.out.print("Tested parameter: "+v_params_testfunc[k].getSimpleName() + " - ");
+    					System.out.print("Input parameter "+k+": "+v_params_testfunc[k].getSimpleName() + " - ");
     					//if one of the parameters is array, it should be printed in a loop
     					if(v_params_testfunc[k].getSimpleName().contains("[]")){
     						//loop for array print: from 0 up to the length of array which is one of the parameters of the tested function
@@ -288,7 +381,40 @@ public class gentest {
     					else System.out.println(v_arg_testfunc[k]);
     				}
     				System.out.println();
-			
+    				
+    				//identifying the source of mistake
+    				System.out.println("+++++++source of exception+++++++");
+    				StackTraceElement[] trace = ex.getCause().getStackTrace();
+    				System.out.println("Message: "+ex.getCause().getMessage());
+    				for(int k=0; k<trace.length; k++){	
+    					if(trace[k].toString().contains(args[2])) 
+    					{
+    						System.out.println("Source of exception: "+trace[k].toString());
+    						//System.out.println("File: "+trace[k].toString().substring(trace[k].toString().indexOf("(")+1,trace[k].toString().indexOf(")")));
+    					}
+    					
+    				}
+
+    				////////////////////////////////////////////////////////////////////////////
+    				////////////////////////////////////////////////////////////////////////////
+    				//look for minimal failing case
+    				minimal_failing_case(); 
+    				System.out.println("+++++++minimal failing case+++++++");
+    				
+    				//runs along the paramehers of the tested function
+    				for(int k=0; k<v_params_testfunc.length; k++){	
+    					//print the type of parameters of the tested function
+    					System.out.print("Input parameter "+k+": "+v_params_testfunc[k].getSimpleName() + " - ");
+    					//if one of the parameters is array, it should be printed in a loop
+    					if(v_params_testfunc[k].getSimpleName().contains("[]")){
+    						//loop for array print: from 0 up to the length of array which is one of the parameters of the tested function
+    						for(int j=0; j<Array.getLength(v_arg_testfunc_minimal[k]); j++){
+    							System.out.print(Array.get(v_arg_testfunc_minimal[k], j).toString() + " "); 
+    						}
+    					}
+    					else System.out.println(v_arg_testfunc_minimal[k]);
+    				}
+    				System.out.println("");
     			}
 
 	  	    }
@@ -297,6 +423,8 @@ public class gentest {
     	
     	//Print the results of test
     	System.out.println();
+    	System.out.println("*************************************************");
+    	System.out.println("*************************************************");
     	System.out.println("*************************************************");
     	System.out.println("The tests were running within: " + time/1000 +"s");
     	System.out.println("Number of all tests: " + i);
