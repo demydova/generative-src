@@ -52,6 +52,9 @@ public class gentest {
 	static Class[] v_params_constr;		//list of types of arguments for consturctor
 	static Class[] v_params_testfunc;	//list of types of arguments for function
 	static boolean[] not_zero;			//boolean array indicating from annotations avoiding instancing 0
+	static String[][] extremum;			//String array indicating the max and min values for array generation
+	static String [][]array_length;		//String array indicating the length for array generation
+	static int min_array_length;
 	
 	//ArrayList for serializing of the results
 	static List<Object[]> arc_v_arg_testfunc = new ArrayList<Object[]>();
@@ -88,6 +91,8 @@ public class gentest {
 	public static void getAnnotations(){
 			//only for testing purpose - please delete this peace of code
 			not_zero=new boolean [v_arg_testfunc.length];
+			extremum=new String [v_arg_testfunc.length][2];
+			array_length=new String [v_arg_testfunc.length][2];
 
 			try
 		      {
@@ -106,18 +111,55 @@ public class gentest {
 		            	
 		            	for(int i=0; i<v_arg_testfunc.length; i++){
 		            		not_zero[i]=false;
+		            		extremum[i][0]="";
+		            		extremum[i][1]="";
+		            		array_length[i][0]="";
+		            		array_length[i][1]="";
+		            		//split annotation related to the function by ";" char;
 		            		for ( String v_annnotation_part : an_v_method.parameters().split(";") ){
-		            			
+		            			//if in the splitted part the name of parameters appears then analyse it further
 		            			if (v_annnotation_part.contains(v_method.getParameters()[i].getName())){
+		            				//if we have identified, that splitted part contain the name of the target parameter and also "not 0"
+		            				//substring, then set corresponding boolean array, which is used for generation of input parameters
+		            				//for the function
 		            				if (v_annnotation_part.contains("not 0")){
 			            				not_zero[i]=true;
+			            				
 			            			}	            				
 		            			}
-		            			
+		            			//splitting the part, related to the correspnding parameter by "," char
+			            		for ( String v_annnotation_comma : v_annnotation_part.split(",") ){
+			            			//if relevant part containt the name of the target parameter
+			            			if (v_annnotation_part.contains(v_method.getParameters()[i].getName())){
+			            				
+			            				if (v_annnotation_comma.contains("max")){	
+			            					extremum[i][1]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("max=")+4, v_annnotation_comma.length());
+			            					System.out.println("found max: "+extremum[i][1]+"for argument number: " + i);
+			            				}
+			            				if (v_annnotation_comma.contains("min")){	
+			            					extremum[i][0]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("min=")+4, v_annnotation_comma.length());
+			            					System.out.println("found min: "+extremum[i][0]+"for argument number: " + i);
+			            				}
+			            				if (v_annnotation_comma.contains("arrayMax")){	
+			            					array_length[i][1]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("arrayMax=")+9, v_annnotation_comma.length());
+			            					System.out.println("found array_length_max: "+array_length[i][1]+" for argument number: " + i);
+			            				}
+			            				if (v_annnotation_comma.contains("arrayMin")){	
+			            					array_length[i][0]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("arrayMin=")+9, v_annnotation_comma.length());
+			            					min_array_length=Integer.parseInt(array_length[i][0]);
+			            					System.out.println("found array_length_min: "+array_length[i][0]+" for argument number: " + i);
+			            					
+			            				}
+			            			
+			            			}
+			            		}
+		            		
 		            		}
+
+		            	}
 		            	}
 		            }
-		         }
+		         
 		      } catch (Exception e)
 		      {
 		         e.printStackTrace();
@@ -208,16 +250,13 @@ public class gentest {
     	    			//if length==1 delete from minimalizing
     	    			if(v_params_testfunc[v_arg_list.get(element)].getSimpleName().contains("[]"))
             			{
-        		    		if(Array.getLength(v_arg_testfunc_minimal[v_arg_list.get(element)])==1) v_arg_list.remove(element);
+        		    		if(Array.getLength(v_arg_testfunc_minimal[v_arg_list.get(element)])==1 || Array.getLength(v_arg_testfunc_minimal[v_arg_list.get(element)])<=min_array_length) v_arg_list.remove(element);
             			}
         		    	else{
-        		    		if(((String) v_arg_testfunc_minimal[v_arg_list.get(element)]).length()==1) v_arg_list.remove(element);
+        		    		if(((String) v_arg_testfunc_minimal[v_arg_list.get(element)]).length()==1 || ((String) v_arg_testfunc_minimal[v_arg_list.get(element)]).length()<=min_array_length) v_arg_list.remove(element);
         		    	}
-    	    			
-    	    			
-    	    			
-    	    		}
-    				
+    	    					   	    			
+    	    		}    				
 
     				iteration++;
     			}
@@ -296,7 +335,7 @@ public class gentest {
 		v_params_testfunc = v_method.getParameterTypes();
 		
 		//initialize variable of testing class
-		v_generator.fill_arguments(v_arg_constr, v_params_constr, null);
+		v_generator.fill_arguments(v_arg_constr, v_params_constr, null, new String[v_arg_constr.length][2], new String[v_arg_constr.length][2]);
 		//instanse of testing class
 		v_object=constructors[0].newInstance(v_arg_constr);
 		
@@ -332,7 +371,7 @@ public class gentest {
     				v_arg_testfunc=rec_v_arg_testfunc.get(i);
     			} else
     			{	
-    				v_generator.fill_arguments(v_arg_testfunc, v_params_testfunc, not_zero); 
+    				v_generator.fill_arguments(v_arg_testfunc, v_params_testfunc, not_zero, extremum, array_length); 
     			}
     			
     			//increment the number of test
@@ -350,6 +389,9 @@ public class gentest {
     		}
  
     		catch (Exception ex) {
+    			
+    			//ex.printStackTrace();
+    			
     			results_counter++;
     			//counts the number of failed tests
     			failed++;
@@ -432,6 +474,6 @@ public class gentest {
     	System.out.println("Number of failed tests: " + failed);
     	
     	//storing of tests
-    	serialize();
+    	//serialize();
     }
 }

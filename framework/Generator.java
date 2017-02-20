@@ -1,5 +1,6 @@
 package framework;
 
+import java.lang.reflect.Array;
 import java.security.SecureRandom;
 import java.util.Random;
 
@@ -7,6 +8,7 @@ public class Generator {
 	
 	//a variable that hold all the possible chars of the English language
 	static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 	
 	//Method for random String generation
 	//len is a variable, that  is changed with each test 
@@ -18,7 +20,7 @@ public class Generator {
 		return sb.toString();
 	}	
 	//function for filling of argument list with random values depending on the parameter types
-    public void fill_arguments(Object[] v_arg, Class[] v_params, boolean[] not_zero)
+    public void fill_arguments(Object[] v_arg, Class[] v_params, boolean[] not_zero, String[][] extremum, String[][] array_length )
     {
     	String typName; //a variable for switch-case
     	//if not_zero equals null, then initialize it as false
@@ -30,7 +32,15 @@ public class Generator {
     			not_zero[k]=false;
     		}
     	}
-    	
+    	//if extremum equals null, then initialize it as false
+    	if (extremum==null)
+    	{
+    		return;
+    	}
+    	if (array_length==null)
+    	{
+    		return;
+    	}
     	for (int i=0;i<v_arg.length; i++){
     		//initialisation of the variable for switch case
     		typName=v_params[i].getSimpleName(); 
@@ -129,18 +139,48 @@ public class Generator {
 					//Generation of values for arrays
 					//Random generation of int arrays
 					case "int[]":
-						int[] ar1 = new int[new Random().nextInt(11)];
+						// if no annotation, then default length of array is 10
+						int len_max=10;
+						int len_min=0;
+						int[] ar1= new int[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+						 ar1 = new int[new Random().nextInt(len_max-len_min+1)+len_min];}
+						
+						
+						
+						//definine of extremum values
+						int v_max=11;
+						int v_min=0;
+						//parse possible limits, given in the annotations
+						if(!extremum[i][0].equals("")) v_min=Integer.parseInt(extremum[i][0]);
+						if(!extremum[i][1].equals("")) v_max=Integer.parseInt(extremum[i][1]);
+						//generates the values in limits of extremems
 						for (int j=0; j<ar1.length; j++){
+							//excludes "0" in generation
 							if(not_zero[i]!=true){
-								ar1[j]=new Random().nextInt(12);
+								ar1[j]=new Random().nextInt(v_max - v_min + 1) + v_min;
 							}else
 							{
 								do{
-									ar1[j]=new Random().nextInt(12);
+									ar1[j]=new Random().nextInt(v_max - v_min + 1) + v_min;
 								   } 
 								while((int)ar1[j]==0);
 							}
 						}
+						//the first and last element of array is set with extremum value
+						if(ar1.length>1)
+						{
+							Array.setInt(ar1, 0, v_min);
+							Array.setInt(ar1, ar1.length-1, v_max);
+						}
+						//if the generated array contains only 1 element, let it be the minimum one
+						if(ar1.length==1)
+						{
+							Array.setInt(ar1, 0, v_min);
+						}
+						
 						v_arg[i]=ar1;
 						break;
 					
