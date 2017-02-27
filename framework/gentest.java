@@ -404,8 +404,8 @@ public class gentest {
     				System.out.println("+++++++source of exception+++++++");
     				StackTraceElement[] trace = ex.getCause().getStackTrace();
     				System.out.println("Message: "+ex.getCause().getMessage());
-    				for(int k=0; k<trace.length; k++){	
-    					if(trace[k].toString().contains(args[2])) 
+    				for(int k=0; k<trace.length; k++){
+    					if(trace[k].toString().contains(v_method.getName())) 
     					{
     						System.out.println("Source of exception: "+trace[k].toString());
     						//System.out.println("File: "+trace[k].toString().substring(trace[k].toString().indexOf("(")+1,trace[k].toString().indexOf(")")));
