@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 public @interface GenTestAnnotation
 {
    String parameters() default "";
+   String instruction() default "";
 }

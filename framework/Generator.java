@@ -303,4 +303,28 @@ public class Generator {
     
   	  
     }   
+    
+    //the function that look for minimal failing case
+    public static Object delete_random_element(Class[] v_params_testfunc, Object v_in_object, int element) throws InstantiationException, IllegalAccessException{
+    	Object result=v_in_object;
+    	int del;
+    	if(v_params_testfunc[element].getSimpleName().contains("[]"))
+    			{
+    				
+    				Object res= Array.newInstance(v_params_testfunc[element].getComponentType(), Array.getLength(v_in_object)-1);
+    				del=new Random().nextInt(Array.getLength(v_in_object));
+    				int k=0;
+    				for(int i=0; i<(Array.getLength(v_in_object)-1);i++)
+    				{
+    					if(i==del) k++;
+    					Array.set(res, i, Array.get(v_in_object, k));
+    					k++;	
+    				}
+    				result=res;
+    			}
+    	else{
+    		result=((String) v_in_object).replaceFirst(""+((String) v_in_object).charAt(new Random().nextInt(((String) v_in_object).length()-1)), "");
+    	}
+ 	return result;
+    }
 }

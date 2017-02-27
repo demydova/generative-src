@@ -66,33 +66,22 @@ public class gentest {
 	
 	
 	//constructor
-	public gentest(String url, String classname, String funcname) throws MalformedURLException, ClassNotFoundException
+	public gentest(String url, String classname) throws MalformedURLException, ClassNotFoundException
 	{
 		v_url=new URL[] {new URL(url)};							//set URL-variable
 		v_cloader = new URLClassLoader(v_url);					//set URLClassLoader
 		v_class=v_cloader.loadClass(classname);					//set Class variable
 		constructors = v_class.getConstructors();				//get array of constructors
-		
-		//looking for instance of tested function
-		for(Method v_methods : v_class.getDeclaredMethods())
-		{
-			//System.out.println("Method " +v_methods.getName() + " Func "+ funcname);
-			if(v_methods.getName().equals(funcname))
-			{
-				//instanse of tested function
-				v_method=v_methods;
-				break;
-			}
-			
-		}		
+				
 	}
 	
 	//function for parsing of annotations from runtime-code of the tested function
-	public static void getAnnotations(){
+	public static boolean getAnnotations(){
 			//only for testing purpose - please delete this peace of code
 			not_zero=new boolean [v_arg_testfunc.length];
 			extremum=new String [v_arg_testfunc.length][2];
 			array_length=new String [v_arg_testfunc.length][2];
+			boolean v_exclude=false;
 
 			try
 		      {
@@ -108,6 +97,7 @@ public class gentest {
 		            	GenTestAnnotation an_v_method = v_method.getAnnotation(GenTestAnnotation.class);
 		            	//Array that keeps the parts of splitted string
 		            	
+		            	if(an_v_method.instruction().equals("exclude")) return true;
 		            	
 		            	for(int i=0; i<v_arg_testfunc.length; i++){
 		            		not_zero[i]=false;
@@ -134,11 +124,11 @@ public class gentest {
 			            				
 			            				if (v_annnotation_comma.contains("max")){	
 			            					extremum[i][1]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("max=")+4, v_annnotation_comma.length());
-			            					System.out.println("found max: "+extremum[i][1]+"for argument number: " + i);
+			            					System.out.println("found max: "+extremum[i][1]+" for argument number: " + i);
 			            				}
 			            				if (v_annnotation_comma.contains("min")){	
 			            					extremum[i][0]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("min=")+4, v_annnotation_comma.length());
-			            					System.out.println("found min: "+extremum[i][0]+"for argument number: " + i);
+			            					System.out.println("found min: "+extremum[i][0]+" for argument number: " + i);
 			            				}
 			            				if (v_annnotation_comma.contains("arrayMax")){	
 			            					array_length[i][1]=v_annnotation_comma.substring(v_annnotation_comma.indexOf("arrayMax=")+9, v_annnotation_comma.length());
@@ -165,31 +155,9 @@ public class gentest {
 		         e.printStackTrace();
 		      }
 			
+			return v_exclude;
+			
 	}
-	
-	//saving the arguments, which leads to exception
-	public static void serialize() {
-        try {
-            XMLEncoder o = new XMLEncoder(new BufferedOutputStream(new FileOutputStream(v_method.getName()+".xml")));
-            o.writeObject(arc_v_arg_testfunc);
-            o.writeObject(v_params_testfunc);
-            o.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
- 
-	//restoring of inputs, which lead to exception - for securing of replicability
-    @SuppressWarnings("unchecked")
-    private static void deSerialize() {
-        try {
-            XMLDecoder d = new XMLDecoder(new BufferedInputStream(new FileInputStream(v_method.getName()+".xml")));
-            rec_v_arg_testfunc = (List<Object[]>) d.readObject();
-            rec_v_params_testfunc = (Class[]) d.readObject();
-            d.close();
-        } catch (FileNotFoundException ex) {
-        }
-    }
     
     //the function that compares the number and types of saved parameters in xml file with those in the tested function
     public static void compare_parm(){
@@ -230,7 +198,7 @@ public class gentest {
     			while(iteration<100 && v_arg_list.size()>0){
     				element=iteration%v_arg_list.size();
     				v_arg_testfunc_minimal_test=v_arg_testfunc_minimal.clone();
-    				v_arg_testfunc_minimal_test[v_arg_list.get(element)]=delete_random_element(v_arg_testfunc_minimal_test[v_arg_list.get(element)], v_arg_list.get(element));
+    				v_arg_testfunc_minimal_test[v_arg_list.get(element)]=Generator.delete_random_element(v_params_testfunc, v_arg_testfunc_minimal_test[v_arg_list.get(element)], v_arg_list.get(element));
     				
 
     				
@@ -262,48 +230,27 @@ public class gentest {
     			}
     }
     
-    //the function that look for minimal failing case
-    public static Object delete_random_element(Object v_in_object, int element) throws InstantiationException, IllegalAccessException{
-    	Object result=v_in_object;
-    	int del;
-    	if(v_params_testfunc[element].getSimpleName().contains("[]"))
-    			{
-    				
-    				Object res= Array.newInstance(v_params_testfunc[element].getComponentType(), Array.getLength(v_in_object)-1);
-    				del=new Random().nextInt(Array.getLength(v_in_object));
-    				int k=0;
-    				for(int i=0; i<(Array.getLength(v_in_object)-1);i++)
-    				{
-    					if(i==del) k++;
-    					Array.set(res, i, Array.get(v_in_object, k));
-    					k++;	
-    				}
-    				result=res;
-    			}
-    	else{
-    		result=((String) v_in_object).replaceFirst(""+((String) v_in_object).charAt(new Random().nextInt(((String) v_in_object).length()-1)), "");
-    	}
- 	return result;
-    }
+
 
 	//main method
 	public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException	
 	{
 		Generator v_generator = new Generator();		
 		gentest test_engine;
+		Persist v_persist=new Persist();
 		//initialize framework for target class and function
 		//gentest test_engine = new gentest("file:///Users/annademydova/Documents/workspace/randoopTestProject/bin/", "core.Util", "edlich");
 		
 		//if quantitiy of arguments doesnt correspond to expectation - close the programm
-		if (args.length !=4) {
-			System.out.println("INITIALIZING ERROR: You need to give 4 arguments");
+		if (args.length !=3) {
+			System.out.println("INITIALIZING ERROR: You need to give 3 arguments");
 			return;
 		}	
 		
 		//try to initialize the class variable with given arguments
 		try{
-			test_engine = new gentest(args[0], args[1], args[2]);
-			time=Long.parseLong(args[3]);	
+			test_engine = new gentest(args[0], args[1]);
+			time=Long.parseLong(args[2]);	
 		}
 		catch(ClassNotFoundException e){
 	        System.out.println("INITIALIZING ERROR: Class cannot be found under given URL.");
@@ -318,21 +265,13 @@ public class gentest {
 				System.out.println(e);
 				return;
 	    	}
-			
-		//if the method for testing is not found in the given class
-		if (v_method==null){
-			System.out.println("INITIALIZING ERROR: The method "+ args[2]+" is not found in class " +args[1]+".java!");
-			return;
-		}	
+		
 
 		
 		//Take first constructor and parse his parameter list
 		v_arg_constr=new Object[constructors[0].getParameterCount()];
 		v_params_constr = constructors[0].getParameterTypes();
 		
-		//Parse parameter list of test function
-		v_arg_testfunc=new Object[v_method.getParameterCount()];
-		v_params_testfunc = v_method.getParameterTypes();
 		
 		//initialize variable of testing class
 		v_generator.fill_arguments(v_arg_constr, v_params_constr, null, new String[v_arg_constr.length][2], new String[v_arg_constr.length][2]);
@@ -340,8 +279,32 @@ public class gentest {
 		v_object=constructors[0].newInstance(v_arg_constr);
 		
 		
+		//////////////////////////////////////////
+		//////////////////////////////////////////
+		//////////////////////////////////////////
+		//looking for instance of tested function
+		for(Method v_methods : v_class.getDeclaredMethods())
+		{
+			System.out.println("+++++++++++++++STARTING TESTING FOR FUNCTION "+v_methods.getName()+"+++++++++++++++");
+			v_method=v_methods;
+			//Parse parameter list of test function
+			v_arg_testfunc=new Object[v_method.getParameterCount()];
+			v_params_testfunc = v_method.getParameterTypes();
+			rec_v_arg_testfunc=null;
+	        rec_v_params_testfunc = null;
+	        arc_v_arg_testfunc.clear();
+
+		
+		
+		
 		//initializing of annotations
-		getAnnotations();
+		if(getAnnotations()==true)
+		{
+			System.out.println("Instruction for skipping of testing identified");
+			System.out.println("+++++++++++++++END TESTING FOR FUNCTION "+v_methods.getName()+"++++++++++++++++++++");
+			System.out.println("");
+			continue;
+		}
 		
 		
 		/////////////////////////////////////////////////////////////////////
@@ -349,9 +312,13 @@ public class gentest {
 		/////////////////////////////////////////////////////////////////////
 		//TESTING
 		
-		//try to check the failed tests, which was already stored
-		deSerialize();
+
+		v_persist.deserialize(v_class.getName(), v_method.getName());
+		rec_v_arg_testfunc=v_persist.rec_v_arg_testfunc;
+        rec_v_params_testfunc=v_persist.rec_v_params_testfunc;
+        
 		compare_parm();
+		
 
 		
 		///check if parameter structure has changed - and if yes - clear up rec_v_arg_testfunc in order, that test engine doesnt use it
@@ -361,12 +328,19 @@ public class gentest {
     	int i=0;
     	int failed=0;
     	int results_counter=0;
+    	int v_rec_count=0;
+    	
+    	
+    	if(rec_v_arg_testfunc!=null) v_rec_count=rec_v_arg_testfunc.size();
+    	
+    	System.out.println("Count stored: "+v_rec_count);
+    	
     	//the time for testing is set
     	while (System.currentTimeMillis() < last + time) {
     		//start testing with failed results from previous testing
     		try{
     			
-    			if(i<rec_v_arg_testfunc.size())
+    			if(i<v_rec_count)
     			{
     				v_arg_testfunc=rec_v_arg_testfunc.get(i);
     			} else
@@ -376,6 +350,8 @@ public class gentest {
     			
     			//increment the number of test
     			i++;
+    			
+    			//System.out.println("Stored sampes "+rec_v_arg_testfunc.size());
     			
     			////////////////////////////////////////////////////////////////////////////
     			////////////////////////////////////////////////////////////////////////////
@@ -475,5 +451,16 @@ public class gentest {
     	
     	//storing of tests
     	//serialize();
+    	v_persist.serialize(arc_v_arg_testfunc, rec_v_params_testfunc, v_class.getName(), v_method.getName());
+    	
+    	
+    	//////////////////////////////////////////////
+    	System.out.println("+++++++++++++++END TESTIG FOR FUNCTION "+v_methods.getName()+"++++++++++++++++++++");
+    	System.out.println("");
+		
+	}
+    	
+    	
+    	
     }
 }
