@@ -1,7 +1,10 @@
 //V2 is refactoring of the code of V1, which was developed without essential structre from historical perpsective
 
+//file:///Users/annademydova/Documents/workspace/ClassForTesting/bin/ core.Util 1000
+
 package framework;
 import library.GenTestAnnotation;
+import sun.reflect.ReflectionFactory;
 
 import java.util.Random;
 import java.lang.annotation.Annotation;
@@ -105,6 +108,7 @@ public class gentest {
 		            		extremum[i][1]="";
 		            		array_length[i][0]="";
 		            		array_length[i][1]="";
+
 		            		//split annotation related to the function by ";" char;
 		            		for ( String v_annnotation_part : an_v_method.parameters().split(";") ){
 		            			//if in the splitted part the name of parameters appears then analyse it further
@@ -267,16 +271,26 @@ public class gentest {
 	    	}
 		
 
+		if(constructors.length>0)
+		{
+			//Take first constructor and parse his parameter list
+			v_arg_constr=new Object[constructors[0].getParameterCount()];
+			v_params_constr = constructors[0].getParameterTypes();
 		
-		//Take first constructor and parse his parameter list
-		v_arg_constr=new Object[constructors[0].getParameterCount()];
-		v_params_constr = constructors[0].getParameterTypes();
 		
-		
-		//initialize variable of testing class
-		v_generator.fill_arguments(v_arg_constr, v_params_constr, null, new String[v_arg_constr.length][2], new String[v_arg_constr.length][2]);
-		//instanse of testing class
-		v_object=constructors[0].newInstance(v_arg_constr);
+			//initialize variable of testing class
+			v_generator.fill_arguments(v_arg_constr, v_params_constr, null, new String[v_arg_constr.length][2], new String[v_arg_constr.length][2]);
+			//instanse of testing class
+			v_object=constructors[0].newInstance(v_arg_constr);
+		} else
+		{
+
+			
+
+
+			v_object=SilentObjectCreator.create(v_class);
+			
+		}
 		
 		
 		//////////////////////////////////////////
@@ -287,6 +301,8 @@ public class gentest {
 		{
 			System.out.println("+++++++++++++++STARTING TESTING FOR FUNCTION "+v_methods.getName()+"+++++++++++++++");
 			v_method=v_methods;
+			//make accessable for
+			v_method.setAccessible(true);
 			//Parse parameter list of test function
 			v_arg_testfunc=new Object[v_method.getParameterCount()];
 			v_params_testfunc = v_method.getParameterTypes();
@@ -313,7 +329,7 @@ public class gentest {
 		//TESTING
 		
 
-		v_persist.deserialize(v_class.getName(), v_method.getName());
+		//v_persist.deserialize(v_class.getName(), v_method.getName());
 		rec_v_arg_testfunc=v_persist.rec_v_arg_testfunc;
         rec_v_params_testfunc=v_persist.rec_v_params_testfunc;
         
@@ -333,7 +349,7 @@ public class gentest {
     	
     	if(rec_v_arg_testfunc!=null) v_rec_count=rec_v_arg_testfunc.size();
     	
-    	System.out.println("Count stored: "+v_rec_count);
+
     	
     	//the time for testing is set
     	while (System.currentTimeMillis() < last + time) {
@@ -402,6 +418,7 @@ public class gentest {
     				
     				//identifying the source of mistake
     				System.out.println("+++++++source of exception+++++++");
+    				System.out.println(ex);
     				StackTraceElement[] trace = ex.getCause().getStackTrace();
     				System.out.println("Message: "+ex.getCause().getMessage());
     				for(int k=0; k<trace.length; k++){
@@ -451,7 +468,7 @@ public class gentest {
     	
     	//storing of tests
     	//serialize();
-    	v_persist.serialize(arc_v_arg_testfunc, rec_v_params_testfunc, v_class.getName(), v_method.getName());
+    	//v_persist.serialize(arc_v_arg_testfunc, rec_v_params_testfunc, v_class.getName(), v_method.getName());
     	
     	
     	//////////////////////////////////////////////

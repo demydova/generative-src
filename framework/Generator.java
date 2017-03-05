@@ -32,15 +32,19 @@ public class Generator {
     			not_zero[k]=false;
     		}
     	}
-    	//if extremum equals null, then initialize it as false
-    	if (extremum==null)
-    	{
-    		return;
+
+    	
+    	//setting default conditions
+    	
+    	for(int i=0; i<v_arg.length; i++){
+    		if (not_zero==null) not_zero[i]=false;
+    		if (extremum[i][0]==null) extremum[i][0]="0";
+    		if (extremum[i][1]==null) extremum[i][1]="100";
+    		if (array_length[i][0]==null) array_length[i][0]="1";
+    		if (array_length[i][1]==null) array_length[i][1]="20";
+
     	}
-    	if (array_length==null)
-    	{
-    		return;
-    	}
+    	
     	for (int i=0;i<v_arg.length; i++){
     		//initialisation of the variable for switch case
     		typName=v_params[i].getSimpleName(); 
@@ -140,14 +144,17 @@ public class Generator {
 					//Random generation of int arrays
 					case "int[]":
 						// if no annotation, then default length of array is 10
+					
+						
 						int len_max=10;
 						int len_min=0;
 						int[] ar1= new int[new Random().nextInt(len_max)];
 						//the length of array is generated according to annotation
 						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
 						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
-						 ar1 = new int[new Random().nextInt(len_max-len_min+1)+len_min];}
-						
+
+						ar1 = new int[new Random().nextInt(len_max-len_min+1)+len_min];}
+
 						
 						
 						//definine of extremum values
