@@ -192,10 +192,10 @@ public class gentest {
     	//look trough list of arguments and find indext of those, which can be optimized
     	for(int i=0; i<v_params_testfunc.length;i++){
     		if(v_params_testfunc[i].getSimpleName().contains("[]")){
-    			if(Array.getLength(v_arg_testfunc_minimal[i])>1) v_arg_list.add(i);
+    			if(Array.getLength(v_arg_testfunc_minimal[i])>1 && Array.getLength(v_arg_testfunc_minimal[i])>min_array_length) v_arg_list.add(i);
     		}
     		if(v_params_testfunc[i].getSimpleName().contains("String")){
-    			if(((String) v_arg_testfunc_minimal[i]).length()>1) v_arg_list.add(i);
+    			if(((String) v_arg_testfunc_minimal[i]).length()>1 && ((String) v_arg_testfunc_minimal[i]).length()>min_array_length) v_arg_list.add(i);
     		}
     		
     	}
@@ -243,7 +243,12 @@ public class gentest {
 		gentest test_engine;
 		Persist v_persist=new Persist();
 		//initialize framework for target class and function
-		//gentest test_engine = new gentest("file:///Users/annademydova/Documents/workspace/randoopTestProject/bin/", "core.Util", "edlich");
+		
+		 
+		
+		List<String> classes = ClassFinder.find(args[0], args[1]);
+		
+
 		
 		//if quantitiy of arguments doesnt correspond to expectation - close the programm
 		if (args.length !=3) {
@@ -251,9 +256,18 @@ public class gentest {
 			return;
 		}	
 		
+for(String var_class : classes)
+	{
+			
+	System.out.println("++++++++++++++++++++++++++++++START TESTING FOR CLASS "+var_class+"+++++++++++++++++++++++++++++++++++");  			
+		
+		
+		
+
+		
 		//try to initialize the class variable with given arguments
 		try{
-			test_engine = new gentest(args[0], args[1]);
+			test_engine = new gentest("file://"+args[0], var_class);
 			time=Long.parseLong(args[2]);	
 		}
 		catch(ClassNotFoundException e){
@@ -291,6 +305,8 @@ public class gentest {
 			v_object=SilentObjectCreator.create(v_class);
 			
 		}
+		
+
 		
 		
 		//////////////////////////////////////////
@@ -368,7 +384,8 @@ public class gentest {
     			i++;
     			
     			//System.out.println("Stored sampes "+rec_v_arg_testfunc.size());
-    			
+
+	
     			////////////////////////////////////////////////////////////////////////////
     			////////////////////////////////////////////////////////////////////////////
     			////////////////////////////////////////////////////////////////////////////
@@ -392,13 +409,14 @@ public class gentest {
     			arc_v_arg_testfunc.add(v_arg_testfunc.clone());
     			
     			if(results_counter==1){
+    				System.out.println();
     				System.out.println("First 10 failed results");
     			}
     			//prints the first 10 negative results which brought to error
     			
     			
     			////10!!!!!
-    			if(results_counter<10){
+    			if(results_counter<=10){
     				System.out.println();
     				System.out.println("Failure: " +results_counter);
     				//runs along the paramehers of the tested function
@@ -417,10 +435,10 @@ public class gentest {
     				System.out.println();
     				
     				//identifying the source of mistake
-    				System.out.println("+++++++source of exception+++++++");
+    				System.out.println("+++++++++++++exception++++++++++++");
     				System.out.println(ex);
     				StackTraceElement[] trace = ex.getCause().getStackTrace();
-    				System.out.println("Message: "+ex.getCause().getMessage());
+    				//System.out.println("Message: "+ex.getCause().getMessage());
     				for(int k=0; k<trace.length; k++){
     					if(trace[k].toString().contains(v_method.getName())) 
     					{
@@ -478,6 +496,8 @@ public class gentest {
 	}
     	
     	
-    	
-    }
+		System.out.println("++++++++++++++++++++++++++++++END TESTING FOR CLASS "+var_class+"+++++++++++++++++++++++++++++++++++");   	
+    }//cycle for for going trough the packages
+
+	}
 }

@@ -8,6 +8,9 @@ public class Generator {
 	
 	//a variable that hold all the possible chars of the English language
 	static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	// if no annotation, then default length of array is 10	
+	int len_max=10;
+	int len_min=0;
 
 	
 	//Method for random String generation
@@ -137,18 +140,19 @@ public class Generator {
 					break;
 					
 					//Random generation of String values
-					case "String":v_arg[i]=randomString (new Random().nextInt(11));
+					case "String":v_arg[i]=null;
+					//the length of array is generated according to annotation
+					if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+					if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+					v_arg[i] = randomString(new Random().nextInt(len_max-len_min+1)+len_min);
+					}
 					break;
 					
 					//Generation of values for arrays
 					//Random generation of int arrays
 					case "int[]":
-						// if no annotation, then default length of array is 10
-					
 						
-						int len_max=10;
-						int len_min=0;
-						int[] ar1= new int[new Random().nextInt(len_max)];
+						int[] ar1 = null;
 						//the length of array is generated according to annotation
 						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
 						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
@@ -193,7 +197,13 @@ public class Generator {
 					
 					//Random generation of boolean arrays
 					case "boolean[]":
-						boolean[] ar2 = new boolean[new Random().nextInt(11)];
+						
+						boolean[] ar2 = new boolean[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+
+						ar2 = new boolean[new Random().nextInt(len_max-len_min+1)+len_min];}
 						for (int j=0; j<ar2.length; j++){
 							ar2[j]=new Random().nextBoolean();
 						}
@@ -202,7 +212,12 @@ public class Generator {
 						
 					//Random generation of char arrays
 					case "char[]":
-						char[] ar3 = new char[new Random().nextInt(11)];
+						char[] ar3 = new char[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+
+						ar3 = new char[new Random().nextInt(len_max-len_min+1)+len_min];}
 						for (int j=0; j<ar3.length; j++){
 							ar3[j]=(char)(new Random().nextInt(26) + 'a');
 						}
@@ -211,7 +226,12 @@ public class Generator {
 					
 					//Random generation of byte arrays
 					case "byte[]":
-						byte[] ar4 = new byte[new Random().nextInt(11)];
+						byte[] ar4 = new byte[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+
+						ar4 = new byte[new Random().nextInt(len_max-len_min+1)+len_min];}
 						for (int j=0; j<ar4.length; j++){
 							if(not_zero[i]!=true){
 								ar4[j]=(byte) (new Random().nextInt(Byte.MAX_VALUE + 1));
@@ -228,7 +248,13 @@ public class Generator {
 						
 					//Random generation of short arrays
 					case "short[]":
-						short[] ar5 = new short[new Random().nextInt(11)];
+						short[] ar5 = new short[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+						ar5 = new short[new Random().nextInt(len_max-len_min+1)+len_min];
+						}
+
 						for (int j=0; j<ar5.length; j++){
 							if(not_zero[i]!=true){
 								ar5[j]=(short) (new Random().nextInt(Short.MAX_VALUE + 1));
@@ -245,7 +271,12 @@ public class Generator {
 					
 					//Random generation of long arrays	
 					case "long[]":
-						long[] ar6 = new long[new Random().nextInt(11)];
+						long[] ar6 = new long[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+						ar6 = new long[new Random().nextInt(len_max-len_min+1)+len_min];
+						}
 						for (int j=0; j<ar6.length; j++){
 							if(not_zero[i]!=true){
 								ar6[j]=new Random().nextLong();
@@ -262,7 +293,12 @@ public class Generator {
 					
 					//Random generation of float arrays
 					case "float[]":
-						float[] ar7 = new float[new Random().nextInt(11)];
+						float[] ar7 = new float[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+						ar7 = new float[new Random().nextInt(len_max-len_min+1)+len_min];
+						}
 						for (int j=0; j<ar7.length; j++){
 							if(not_zero[i]!=true){
 								ar7[j]=new Random().nextFloat();
@@ -279,7 +315,12 @@ public class Generator {
 						
 					//Random generation of double arrays
 					case "double[]":
-						double[] ar8 = new double[new Random().nextInt(11)];
+						double[] ar8 = new double[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);
+						ar8 = new double[new Random().nextInt(len_max-len_min+1)+len_min];
+						}
 						for (int j=0; j<ar8.length; j++){
 							if(not_zero[i]!=true){
 								ar8[j]=new Random().nextDouble();
@@ -296,9 +337,12 @@ public class Generator {
 						
 					//Random generation of String arrays
 					case "String[]":
-						String[] ar9 = new String[new Random().nextInt(11)];
+						String[] ar9 = new String[new Random().nextInt(len_max)];
+						//the length of array is generated according to annotation
+						if(!array_length[i][0].equals("")) len_min=Integer.parseInt(array_length[i][0]);
+						if(!array_length[i][1].equals("")){ len_max=Integer.parseInt(array_length[i][1]);}
 						for (int j=0; j<ar9.length; j++){
-							ar9[j]=randomString (new Random().nextInt(11));
+							ar9[j]=randomString (new Random().nextInt(len_max));
 						}
 						v_arg[i]=ar9;
 						break;
